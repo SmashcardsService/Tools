@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smashcards Pack Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #4a5568;
+            margin-bottom: 30px;
+        }
+        
+        .card-input-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .rarity-group {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .rarity-group h3 {
+            margin: 0 0 15px 0;
+            color: #2d3748;
+        }
+        
+        .commons { border-color: #68d391; }
+        .uncommons { border-color: #4fd1c7; }
+        .rares { border-color: #fbd38d; }
+        .ultrarares { border-color: #f687b3; }
+        .assets { border-color: #a78bfa; }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            border: 1px solid #cbd5e0;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: inherit;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        
+        .generate-btn {
+            display: block;
+            width: 200px;
+            margin: 0 auto;
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .pack-result {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 15px;
+            color: white;
+            display: none;
+        }
+        
+        .pack-result h2 {
+            margin: 0 0 20px 0;
+            text-align: center;
+        }
+        
+        .pack-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .card-group {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .card-group h4 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .card-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .card-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .card-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .info {
+            background: #bee3f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3182ce;
+        }
+
+        .preset-controls {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .preset-controls label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .preset-controls select {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 2px solid #cbd5e0;
+            font-size: 16px;
+        }
+
+        .preset-controls button {
+            margin-left: 10px;
+            padding: 8px 15px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .preset-controls button:hover {
+            background: #c53030;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎴 Smashcards Pack Generator</h1>
+        
+        <div class="info">
+            <strong>Pack Contents:</strong> 3 Commons • 2 Uncommons • 1 Rare • 1 Rare/Ultra Rare (25% chance) • 2 Assets
+            <br><strong>Instructions:</strong> Select a preset or enter cards manually (one per line), then click Generate Pack!
+        </div>
+        
+        <div class="preset-controls">
+            <label for="presetSelect">Quick Presets:</label>
+            <select id="presetSelect">
+                <option value="">-- Select Expansion --</option>
+            </select>
+            <button onclick="clearAll()">Clear All</button>
+        </div>
+        
+        <div class="card-input-section">
+            <div class="rarity-group commons">
+                <h3>Commons (9 cards)</h3>
+                <textarea id="commons" placeholder="Enter common cards, one per line..."></textarea>
+            </div>
+            
+            <div class="rarity-group uncommons">
+                <h3>Uncommons (9 cards)</h3>
+                <textarea id="uncommons" placeholder="Enter uncommon cards, one per line..."></textarea>
+            </div>
+            
+            <div class="rarity-group rares">
+                <h3>Rares (9 cards)</h3>
+                <textarea id="rares" placeholder="Enter rare cards, one per line..."></textarea>
+            </div>
+            
+            <div class="rarity-group ultrarares">
+                <h3>Ultra Rares (9 cards)</h3>
+                <textarea id="ultrarares" placeholder="Enter ultra rare cards, one per line..."></textarea>
+            </div>
+            
+            <div class="rarity-group assets">
+                <h3>Assets (18 cards)</h3>
+                <textarea id="assets" placeholder="Enter asset cards, one per line..."></textarea>
+            </div>
+        </div>
+        
+        <button class="generate-btn" onclick="generatePack()">Generate Pack!</button>
+        
+        <div class="pack-result" id="packResult">
+            <h2>🎉 Your Booster Pack</h2>
+            <div class="pack-cards" id="packCards"></div>
+        </div>
+    </div>
+
+    <script>
+        // PRESET DATA - Edit card names here
+        const PRESETS = {
+            "Ideas1": {
+                commons: [
+                    "Flame Spark",
+                    "Water Drop", 
+                    "Earth Pebble",
+                    "Wind Gust",
+                    "Lightning Zap",
+                    "Ice Shard",
+                    "Lava Bubble",
+                    "Storm Cloud",
+                    "Crystal Fragment"
+                ],
+                uncommons: [
+                    "Fire Bolt",
+                    "Tidal Wave",
+                    "Rock Slide",
+                    "Hurricane",
+                    "Thunder Strike",
+                    "Blizzard",
+                    "Magma Flow",
+                    "Tornado",
+                    "Diamond Shield"
+                ],
+                rares: [
+                    "Inferno Master",
+                    "Ocean Lord",
+                    "Mountain King",
+                    "Sky Ruler",
+                    "Lightning Emperor",
+                    "Frost Queen",
+                    "Volcano Titan",
+                    "Storm Goddess",
+                    "Crystal Sage"
+                ],
+                ultrarares: [
+                    "Phoenix of Eternal Flame",
+                    "Leviathan of the Deep",
+                    "Gaia the Earth Mother",
+                    "Zephyr the Wind God",
+                    "Raiju Lightning Beast",
+                    "Yuki-Onna Ice Spirit",
+                    "Ifrit the Volcano Lord",
+                    "Tempest Dragon",
+                    "Prismatic Elemental"
+                ],
+                assets: [
+                    "Elemental Shrine",
+                    "Fire Temple",
+                    "Water Sanctuary",
+                    "Earth Altar",
+                    "Wind Tower",
+                    "Lightning Rod",
+                    "Ice Cavern",
+                    "Lava Forge",
+                    "Storm Circle",
+                    "Crystal Cave",
+                    "Elemental Nexus",
+                    "Fusion Chamber",
+                    "Elemental Orb",
+                    "Power Crystal",
+                    "Ancient Rune",
+                    "Mana Spring",
+                    "Sacred Totem",
+                    "Elemental Catalyst"
+                ]
+            },
+            "Ideas2": {
+                commons: [
+                    "Star Fighter",
+                    "Nebula Scout",
+                    "Asteroid Miner",
+                    "Solar Flare",
+                    "Moon Beam",
+                    "Comet Tail",
+                    "Space Debris",
+                    "Cosmic Dust",
+                    "Meteor Shard"
+                ],
+                uncommons: [
+                    "Galaxy Cruiser",
+                    "Black Hole",
+                    "Supernova",
+                    "Wormhole",
+                    "Pulsar Wave",
+                    "Quantum Leap",
+                    "Stellar Wind",
+                    "Dark Matter",
+                    "Plasma Cannon"
+                ],
+                rares: [
+                    "Starship Commander",
+                    "Void Walker",
+                    "Solar System",
+                    "Time Warden",
+                    "Space Admiral",
+                    "Cosmic Entity",
+                    "Galactic Emperor",
+                    "Dimension Lord",
+                    "Universe Keeper"
+                ],
+                ultrarares: [
+                    "Cosmic Phoenix Rising",
+                    "Eternal Void Dragon",
+                    "Master of Galaxies",
+                    "Time-Space Weaver",
+                    "Supreme Star God",
+                    "Infinity Guardian",
+                    "Reality Shaper",
+                    "Multiverse King",
+                    "Cosmic Consciousness"
+                ],
+                assets: [
+                    "Space Station",
+                    "Command Center",
+                    "Solar Panel Array",
+                    "Quantum Laboratory",
+                    "Warp Gate",
+                    "Defense Platform",
+                    "Mining Outpost",
+                    "Research Facility",
+                    "Communications Hub",
+                    "Energy Reactor",
+                    "Orbital Cannon",
+                    "Shield Generator",
+                    "Hangar Bay",
+                    "Refinery",
+                    "Observation Deck",
+                    "Cargo Hold",
+                    "Navigation System",
+                    "Life Support"
+                ]
+            },
+            "ElementalFury": {
+                commons: [
+                    "Lava Rock",
+                    "Magic Orb",
+                    "Thunder Hound",
+                    "Crystal Shard",
+                    "Golden Crown",
+                    "Swirling Portal",
+                    "Rainbow",
+                    "Silver Arrow",
+                    "Lightning Whip"
+                ],
+                uncommons: [
+                    "Thunder Bolt",
+                    "Shadow Wolf",
+                    "Mystical Vines",
+                    "Dragon Egg",
+                    "Fiery Katana",
+                    "Flaming Marshmallow",
+                    "Mischievous Monkey",
+                    "Jade Serpent",
+                    "Sapphire Star"
+                ],
+                rares: [
+                    "Mecha Moth",
+                    "Blazing Phoenix",
+                    "Dark Knight",
+                    "Hydro Snake",
+                    "Inferno Lion",
+                    "Steel Hammer",
+                    "Storm Eagle",
+                    "Towering Oak",
+                    "Guardian Dragon"
+                ],
+                ultrarares: [
+                    "Crimson Warrior",
+                    "Megalodon",
+                    "Volcano",
+                    "Snapdragon",
+                    "Tsunami",
+                    "Frost Dragon",
+                    "Juggernaut",
+                    "Unicorn",
+                    "Hurricane"
+                ],
+                assets: [
+                    "Deflection",
+                    "Teleportation",
+                    "Future Sight",
+                    "Fueled Up",
+                    "Calmness",
+                    "Simplicity",
+                    "Frozen Lake",
+                    "Magma Field",
+                    "Bermuda Triangle",
+                    "Revenge",
+                    "Speedster",
+                    "Soul Consume",
+                    "Burning Spirit",
+                    "Awareness",
+                    "Toughness",
+                    "Graveyard",
+                    "Island Paradise",
+                    "Field of Peace"
+                ]
+            }
+        };
+        
+        // Initialize presets when page loads
+        function initializePresets() {
+            const select = document.getElementById('presetSelect');
+            
+            // Add options for each preset
+            Object.keys(PRESETS).forEach(presetName => {
+                const option = document.createElement('option');
+                option.value = presetName;
+                option.textContent = presetName;
+                select.appendChild(option);
+            });
+        }
+        
+        function loadPreset() {
+            const select = document.getElementById('presetSelect');
+            const presetName = select.value;
+            
+            if (!presetName || !PRESETS[presetName]) return;
+            
+            const preset = PRESETS[presetName];
+            
+            document.getElementById('commons').value = preset.commons.join('\n');
+            document.getElementById('uncommons').value = preset.uncommons.join('\n');
+            document.getElementById('rares').value = preset.rares.join('\n');
+            document.getElementById('ultrarares').value = preset.ultrarares.join('\n');
+            document.getElementById('assets').value = preset.assets.join('\n');
+        }
+        
+        function clearAll() {
+            document.getElementById('commons').value = '';
+            document.getElementById('uncommons').value = '';
+            document.getElementById('rares').value = '';
+            document.getElementById('ultrarares').value = '';
+            document.getElementById('assets').value = '';
+            document.getElementById('presetSelect').value = '';
+        }
+        
+        function getCardList(id) {
+            const text = document.getElementById(id).value.trim();
+            return text ? text.split('\n').map(card => card.trim()).filter(card => card.length > 0) : [];
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        function selectRandomCards(cards, count) {
+            if (cards.length < count) {
+                alert(`Not enough cards in this category! Need ${count}, have ${cards.length}`);
+                return [];
+            }
+            return shuffleArray(cards).slice(0, count);
+        }
+        
+        function generatePack() {
+            const commons = getCardList('commons');
+            const uncommons = getCardList('uncommons');
+            const rares = getCardList('rares');
+            const ultrarares = getCardList('ultrarares');
+            const assets = getCardList('assets');
+            
+            // Validate card counts
+            const errors = [];
+            if (commons.length === 0) errors.push('Commons');
+            if (uncommons.length === 0) errors.push('Uncommons');
+            if (rares.length === 0) errors.push('Rares');
+            if (ultrarares.length === 0) errors.push('Ultra Rares');
+            if (assets.length === 0) errors.push('Assets');
+            
+            if (errors.length > 0) {
+                alert(`Please add cards to: ${errors.join(', ')}`);
+                return;
+            }
+            
+            // Generate pack
+            const pack = {
+                commons: selectRandomCards(commons, 3),
+                uncommons: selectRandomCards(uncommons, 2),
+                assets: selectRandomCards(assets, 2)
+            };
+            
+            // First rare slot - always a rare
+            const firstRare = selectRandomCards(rares, 1);
+            pack.rare1 = firstRare;
+            
+            // Second rare slot - 25% chance for ultra rare
+            const isUltraRare = Math.random() < 0.25;
+            if (isUltraRare) {
+                pack.rare2 = selectRandomCards(ultrarares, 1);
+                pack.rare2Type = 'Ultra Rare';
+            } else {
+                // Select a different rare than the first one
+                const availableRares = rares.filter(rare => !firstRare.includes(rare));
+                if (availableRares.length > 0) {
+                    pack.rare2 = selectRandomCards(availableRares, 1);
+                } else {
+                    pack.rare2 = selectRandomCards(rares, 1); // fallback if only one rare
+                }
+                pack.rare2Type = 'Rare';
+            }
+            
+            displayPack(pack);
+        }
+        
+        function displayPack(pack) {
+            const packCards = document.getElementById('packCards');
+            packCards.innerHTML = `
+                <div class="card-group">
+                    <h4>Commons (3)</h4>
+                    <ul class="card-list">
+                        ${pack.commons.map(card => `<li>${card}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="card-group">
+                    <h4>Uncommons (2)</h4>
+                    <ul class="card-list">
+                        ${pack.uncommons.map(card => `<li>${card}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="card-group">
+                    <h4>Rare (1)</h4>
+                    <ul class="card-list">
+                        ${pack.rare1.map(card => `<li>${card}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="card-group">
+                    <h4>${pack.rare2Type} (1)</h4>
+                    <ul class="card-list">
+                        ${pack.rare2.map(card => `<li>✨ ${card}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <div class="card-group">
+                    <h4>Assets (2)</h4>
+                    <ul class="card-list">
+                        ${pack.assets.map(card => `<li>${card}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('packResult').style.display = 'block';
+            document.getElementById('packResult').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Add event listener for preset selection
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePresets();
+            document.getElementById('presetSelect').addEventListener('change', loadPreset);
+        });
+    </script>
+</body>
+</html>
